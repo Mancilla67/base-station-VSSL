@@ -63,53 +63,22 @@ void loop() {
   if(Serial.available() > 0){
     String data = Serial.readStringUntil('\n');
     
-    // Buscamos las dos comas
-    int firstComma = data.indexOf(',');
-    int secondComma = data.indexOf(',', firstComma + 1);
+    int x1, y1, x2, y2, x3, y3, x4, y4, x5, y5;
 
-    // Si encontramos las dos comas, procedemos
-    if (firstComma > 0 && secondComma > 0){
-      
-      // 1. PARSEAR (Cortar el string en pedacitos)
-      String idStr = data.substring(0, firstComma);
-      String xStr  = data.substring(firstComma + 1, secondComma);
-      String yStr  = data.substring(secondComma + 1);
-
-      int id = idStr.toInt();
-      int x  = xStr.toInt();
-      int y  = yStr.toInt();
-
-      // 2. LIMPIEZA DE SEGURIDAD (IMPORTANTE)
-      // Ponemos toda la estructura en 0 antes de asignar.
-      // Esto hace que si controlas el Robot 1, el 2, 3, 4 y 5 se frenen.
-      //memset(&mimensaje, 0, sizeof(mimensaje));
-
-      // 3. ASIGNAR VALORES AL ROBOT CORRESPONDIENTE
-      switch (id) {
-        case 1: 
-          mimensaje.x_robot_1 = (int8_t)x; 
-          mimensaje.y_robot_1 = (int8_t)y; 
-          break;
-        case 2: 
-          mimensaje.x_robot_2 = (int8_t)x; 
-          mimensaje.y_robot_2 = (int8_t)y; 
-          break;
-        case 3: 
-          mimensaje.x_robot_3 = (int8_t)x; 
-          mimensaje.y_robot_3 = (int8_t)y; 
-          break;
-        case 4: 
-          mimensaje.x_robot_4 = (int8_t)x; 
-          mimensaje.y_robot_4 = (int8_t)y; 
-          break;
-        case 5: 
-          mimensaje.x_robot_5 = (int8_t)x; 
-          mimensaje.y_robot_5 = (int8_t)y; 
-          break;
+    int leidos = sscanf(data.c_str(), "%d,%d,%d,%d,%d,%d,%d,%d,%d,%d",
+                        &x1, &y1, &x2, &y2, &x3, &y3, &x4, &y4, &x5, &y5);
+    if (leidos == 10) {
+        mimensaje.x_robot_1 = (int8_t)x1;
+        mimensaje.y_robot_1 = (int8_t)y1;
+        mimensaje.x_robot_2 = (int8_t)x2;
+        mimensaje.y_robot_2 = (int8_t)y2;
+        mimensaje.x_robot_3 = (int8_t)x3;
+        mimensaje.y_robot_3 = (int8_t)y3;
+        mimensaje.x_robot_4 = (int8_t)x4;
+        mimensaje.y_robot_4 = (int8_t)y4;
+        mimensaje.x_robot_5 = (int8_t)x5;
+        mimensaje.y_robot_5 = (int8_t)y5;
+        esp_now_send(broadcastAddress, (uint8_t *) &mimensaje, sizeof(mimensaje));
       }
-
-      // 4. ENVIAR A TODOS (Broadcast)
-      esp_now_send(broadcastAddress, (uint8_t *) &mimensaje, sizeof(mimensaje));
-    }
   }
 }
