@@ -3,22 +3,31 @@ import serial
 import time
 
 #-----Configurations-----
-SERIAL_PORT = '/dev/ttyUSB0'  # Change as needed
+SERIAL_PORT = 'COM6'  # Change as needed
 #Puede que no se tengan los permisos necesarios en linux para acceder al puerto serial en linux
 #usar: sudo usermod -a -G dialout $USER para ubuntu/debian
 #usar: sudo usermod -a -G uucp $USER para archlinux/manjaro
 BAUD_RATE = 115200
+NUM_ROBOTS = 2 # Numero de robots a controlar modificar si se agragan mas robots
+#--------------------------------
 
 #iniciar pygame
 pygame.init()
 pygame.joystick.init()
-try:
-    joystick = pygame.joystick.Joystick(0)
-    joystick.init()
-    print(f'Joystick conectado: {joystick.get_name()}')
-except:
+
+num_mandos = pygame.joystick.get_count()
+if num_mandos == 0:
     print("No se encontro ningun joystick.")
     exit()
+print(f"Numero de joysticks conectados: {num_mandos}")
+
+mandos = []
+for i in range(num_mandos):
+    j = pygame.joystick.Joystick(i)
+    j.init()
+    mandos.append(j)
+    print(f"control {i}: {j.get_name()} -> Asignado a robot {i+1}")
+    
 
 
 #iniciar comunicacion serial
@@ -32,31 +41,30 @@ except:
 
 
 #main loop
-
 try:
     while True:
         pygame.event.pump()
 
-        val_x = joystick.get_axis(0)  # Eje X
-        val_y = joystick.get_axis(1)  # Eje Y
+        for i, joystick in enumerate(mandos):
+            robot_id = i + 1
 
-        
-        enviar_x = int(val_x * 100)
-        enviar_y = int(val_y * -100)
+            eje_x = joystick.get_axis(0)  # Eje X
+            eje_y = joystick.get_axis(1)  # Eje Y
 
-        #zona muerta
-        if abs(enviar_x) < 10:
-            enviar_x = 0
-        if abs(enviar_y) < 10:
-            enviar_y = 0
-        
-        #formato de datos
-        mensaje = f'{enviar_x},{enviar_y}\n'
+            val_x = int(eje_x * 100)
+            val_y = int(eje_y * -100)
 
-        arduino.write(mensaje.encode())
+            if abs(val_x) < 10: val_x = 0
+            if abs(val_y) < 10: val_y = 0
 
-        #DEBUG
-        print(f"Enviando -> X: {enviar_x}, Y: {enviar_y}", end="\r")
+            mensaje = f"{robot_id},{val_x},{val_y}\n"
+            arduino.write(mensaje.encode())
+        info = ""
+
+        for i,j in enumerate(mandos):
+            axis_x = int(j.get_axis(0)*100)
+            info += f"| R{i+1}: {axis_x} "
+        print(f"Estado: {info}", end='\r')
 
         time.sleep(0.02)
 
